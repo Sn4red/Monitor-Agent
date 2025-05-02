@@ -35,6 +35,7 @@ class Cpu:
         es la temperatura del paquete de la CPU.
         '''
         try:
+            # Se accede al JSON que brinda LibreHardware Monitor por medio de una petición HTTP GET.
             url = 'http://localhost:8085/data.json'
             respuesta = requests.get(url, timeout = 3)
             respuesta.raise_for_status()
