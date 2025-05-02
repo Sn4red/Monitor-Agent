@@ -35,7 +35,7 @@ class Cpu:
         es la temperatura del paquete de la CPU.
         '''
         try:
-            # Se accede al JSON que brinda LibreHardware Monitor por medio de una petición HTTP GET.
+            # Se accede al JSON que brinda Libre Hardware Monitor por medio de una petición HTTP GET.
             url = 'http://localhost:8085/data.json'
             respuesta = requests.get(url, timeout = 3)
             respuesta.raise_for_status()
@@ -45,7 +45,7 @@ class Cpu:
             temperatura_nucleos = []
 
             for hardware in datos['Children'][0]['Children']:
-                # Se accede al objeto de la CPU por medio de la imagen por defecto que brinda LibreHardware Monitor.
+                # Se accede al objeto de la CPU por medio de la imagen por defecto que brinda Libre Hardware Monitor.
                 if hardware.get('ImageURL', '') == 'images_icon/cpu.png':
                     for sensor in hardware['Children']:
                         # Se accede al objeto que contiene los sensores de temperatura.
@@ -74,5 +74,5 @@ class Cpu:
             
             return temperatura_cpu                                
         except requests.RequestException as error:
-            print('Error al conectar con el servidor de LibreHardware Monitor:', error)
+            print('Error al conectar con el servidor de Libre Hardware Monitor:', error)
             return []
