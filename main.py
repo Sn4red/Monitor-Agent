@@ -98,6 +98,7 @@ def configurar_libre_hardware_monitor():
     - Configurar el puerto del Web Server a 8085.
     '''
 
+    # Se obtiene el directorio de trabajo actual como una ruta absoluta para buscar el archivo de configuración.
     ruta_configuracion = os.path.join(os.getcwd(), 'librehardwaremonitor', 'LibreHardwareMonitor.config')
 
     try:
@@ -122,3 +123,5 @@ def configurar_libre_hardware_monitor():
     except Exception as error:
         print(f'{datetime.now()} >>> *** Error al configurar Libre Hardware Monitor ***')
         print(error)
+
+iniciar_libre_hardware_monitor()
