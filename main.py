@@ -116,10 +116,9 @@ def configurar_libre_hardware_monitor():
             if ajuste.attrib.get('key') == 'listenerPort':
                 ajuste.set('value', '8085')
 
+        # Se sobreescribe el archivo de configuración con los nuevos ajustes.
         tree.write(ruta_configuracion)
         print(f'{datetime.now()} >>> *** Libre Hardware Monitor configurado correctamente ***')
     except Exception as error:
         print(f'{datetime.now()} >>> *** Error al configurar Libre Hardware Monitor ***')
         print(error)
-
-iniciar_libre_hardware_monitor()
