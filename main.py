@@ -22,7 +22,8 @@ def iniciar_libre_hardware_monitor():
         if inspeccion_instancia['esta_activo']:
             print(f'{datetime.now()} >>> *** Libre Hardware Monitor ya está en ejecución ***')
 
-            # Si la instancia ejecutada es externa al proyecto, se notifica al usuario.
+            # Si la instancia ejecutada es externa al proyecto, verificando si hay un valor True en el list,
+            # se notifica al usuario.
             if True in inspeccion_instancia['hay_instancias_externas']:
                 print('*** Libre Hardware Monitor está en ejecución como una instancia externa al proyecto ***')
                 print('*** Se recomienda cerrar la instancia externa para evitar conflictos ***')
@@ -58,6 +59,7 @@ def esta_libre_hardware_monitor_activo():
                 ruta_ejecucion = os.path.abspath(proceso.info['exe'])
 
                 # Se compara la ruta del ejecutable en ejecución con la ruta del ejecutable local.
+                # Si son diferentes, se agrega True al list.
                 if ruta_ejecucion != ruta_local:
                     hay_instancias_externas.append(True)
                 else:
