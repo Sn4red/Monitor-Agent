@@ -23,7 +23,7 @@ def iniciar_libre_hardware_monitor():
             print(f'{datetime.now()} >>> *** Libre Hardware Monitor ya está en ejecución ***')
 
             # Si la instancia ejecutada es externa al proyecto, se notifica al usuario.
-            if inspeccion_instancia['es_instancia_externa']:
+            if True in inspeccion_instancia['hay_instancias_externas']:
                 print('*** Libre Hardware Monitor está en ejecución como una instancia externa al proyecto ***')
                 print('*** Se recomienda cerrar la instancia externa para evitar conflictos ***')
         else:
@@ -45,8 +45,8 @@ def esta_libre_hardware_monitor_activo():
     # compararla con la ruta del ejecutable en ejecución.
     ruta_local = os.path.abspath(os.path.join('librehardwaremonitor', 'LibreHardwareMonitor.exe'))
 
-    esta_activo = None
-    es_instancia_externa = None
+    esta_activo = False
+    hay_instancias_externas = []
 
     # Se iteran sobre los procesos en ejecución.
     for proceso in psutil.process_iter(['name', 'exe']):
@@ -59,14 +59,9 @@ def esta_libre_hardware_monitor_activo():
 
                 # Se compara la ruta del ejecutable en ejecución con la ruta del ejecutable local.
                 if ruta_ejecucion != ruta_local:
-                    es_instancia_externa = True
+                    hay_instancias_externas.append(True)
                 else:
-                    es_instancia_externa = False
-            
-                return {
-                    'esta_activo': esta_activo,
-                    'es_instancia_externa': es_instancia_externa
-                }
+                    hay_instancias_externas.append(False)
         except psutil.AccessDenied as error:
             print(f'{datetime.now()} >>> *** Error. No se tienen permisos suficientes para verificar si Libre Hardware Monitor está activo ***')
             print('*** La ejecución del agente se finalizará. Verificar privilegios ***')
@@ -79,14 +74,13 @@ def esta_libre_hardware_monitor_activo():
             print(error)
 
             esta_activo = False
-            es_instancia_externa = False
-                    
-    esta_activo = False
-    es_instancia_externa = False
+            hay_instancias_externas.append(False)
+
+    print(hay_instancias_externas)
 
     return {
         'esta_activo': esta_activo,
-        'es_instancia_externa': es_instancia_externa
+        'hay_instancias_externas': hay_instancias_externas
     }
 
 def configurar_libre_hardware_monitor():
@@ -123,3 +117,5 @@ def configurar_libre_hardware_monitor():
     except Exception as error:
         print(f'{datetime.now()} >>> *** Error al configurar Libre Hardware Monitor ***')
         print(error)
+
+iniciar_libre_hardware_monitor()
