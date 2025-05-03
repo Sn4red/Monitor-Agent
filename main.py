@@ -123,5 +123,3 @@ def configurar_libre_hardware_monitor():
     except Exception as error:
         print(f'{datetime.now()} >>> *** Error al configurar Libre Hardware Monitor ***')
         print(error)
-
-iniciar_libre_hardware_monitor()
