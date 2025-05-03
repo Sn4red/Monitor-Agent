@@ -3,6 +3,8 @@ import os
 import psutil
 import sys
 
+import xml.etree.ElementTree as ET
+
 from datetime import datetime
 
 def iniciar_libre_hardware_monitor():
@@ -28,6 +30,9 @@ def iniciar_libre_hardware_monitor():
             # Se ejecuta el comando de PowerShell para iniciar Libre Hardware Monitor con privilegios de administrador.
             subprocess.run(['powershell', 'Start-Process', ruta, '-Verb', 'runAs'], check=True)
             print(f'{datetime.now()} >>>*** Libre Hardware Monitor iniciado correctamente ***')
+
+            # Se configura Libre Hardware Monitor para que se inicie con los ajustes deseados.
+            configurar_libre_hardware_monitor()
     except Exception as error:
         print(f'{datetime.now()} >>> *** Error al iniciar Libre Hardware Monitor ***')
         print(error)
@@ -83,3 +88,38 @@ def esta_libre_hardware_monitor_activo():
         'esta_activo': esta_activo,
         'es_instancia_externa': es_instancia_externa
     }
+
+def configurar_libre_hardware_monitor():
+    '''
+    Configura Libre Hardware Monitor para que se inicie con los siguientes ajustes:
+
+    - Iniciar el Web Server.
+    - Iniciar en segundo plano.
+    - Configurar el puerto del Web Server a 8085.
+    '''
+
+    ruta_configuracion = os.path.join(os.getcwd(), 'librehardwaremonitor', 'LibreHardwareMonitor.config')
+
+    try:
+        tree = ET.parse(ruta_configuracion)
+        root = tree.getroot()
+
+        # Se itera sobre los ajustes de configuración que están en el XML, ahora convertidos a un objeto de tipo ElementTree.
+        for ajuste in root.findall('.//add'):
+            # Iniciar el Web Server.
+            if ajuste.attrib.get('key') == 'runWebServerMenuItem':
+                ajuste.set('value', 'true')
+            # Iniciar en segundo plano.
+            if ajuste.attrib.get('key') == 'startMinMenuItem':
+                ajuste.set('value', 'true')
+            # Configurar el puerto del Web Server a 8085.
+            if ajuste.attrib.get('key') == 'listenerPort':
+                ajuste.set('value', '8085')
+
+        tree.write(ruta_configuracion)
+        print(f'{datetime.now()} >>> *** Libre Hardware Monitor configurado correctamente ***')
+    except Exception as error:
+        print(f'{datetime.now()} >>> *** Error al configurar Libre Hardware Monitor ***')
+        print(error)
+
+iniciar_libre_hardware_monitor()
