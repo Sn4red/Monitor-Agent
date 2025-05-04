@@ -1,6 +1,8 @@
 import psutil
 import requests
 
+from datetime import datetime
+
 class Cpu:
     '''Clase para obtener las métricas de la CPU.'''
 
@@ -29,8 +31,8 @@ class Cpu:
 
     def obtener_temperatura_cpu_windows(self):
         '''
-        Devuelve la temperatura de la CPU en un tuple, donde el primer elemento
-        es un tuple conteniendo la temperatura de cada núcleo, el segundo
+        Devuelve la temperatura de la CPU en Windows en un tuple, donde el primer
+        elemento es un tuple conteniendo la temperatura de cada núcleo, el segundo
         elemento es la temperatura promedio de los núcleos y el tercer elemento
         es la temperatura del paquete de la CPU.
         '''
@@ -74,5 +76,38 @@ class Cpu:
             
             return temperatura_cpu                                
         except requests.RequestException as error:
-            print('Error al conectar con el servidor de Libre Hardware Monitor:', error)
+            print(f'{datetime.now()} >>> *** Error al conectar con el servidor de Libre Hardware Monitor ***')
+            print(error)
+
             return []
+        
+    def obtener_temperatura_cpu_linux(self):
+        '''
+        Devuelve la temperatura de la CPU en Linux en un tuple, donde el primer
+        elemento es un tuple conteniendo la temperatura de cada núcleo, el segundo
+        elemento es la temperatura promedio de los núcleos y el tercer elemento
+        es la temperatura del paquete de la CPU.
+        '''
+        # Se obtienen las temperaturas de los sensores del sistema.
+        temperaturas = psutil.sensors_temperatures()
+
+        paquete_cpu = None
+        temperaturas_nucleos = []
+
+        # Se verifica si el sensor de temperatura de la CPU está disponible.
+        if 'coretemp' in temperaturas:
+            for sensor in temperaturas['coretemp']:
+                # Se accede al objeto que contiene la temperatura del paquete de la CPU.
+                if sensor.label.startswith('Package'):
+                    paquete_cpu = sensor.current
+                # Se accede al objeto que contiene la temperatura de cada núcleo.
+                if sensor.label.startswith('Core'):
+                    temperaturas_nucleos.append(sensor.current)
+        else:
+            print(f'{datetime.now()} >>> *** No se encontró el sensor de temperatura de la CPU ***')
+
+        temperatura_nucleos = tuple(temperaturas_nucleos)
+        temperatura_promedio = round(sum(temperatura_nucleos) / len(temperatura_nucleos), 2)
+        temperatura_cpu = (temperatura_nucleos, temperatura_promedio, paquete_cpu)
+
+        return temperatura_cpu
