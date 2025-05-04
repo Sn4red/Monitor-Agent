@@ -3,40 +3,14 @@ import os
 import psutil
 import sys
 
+# Metricas
+import metrics.cpu as cpu
+import metrics.memory as memory
+import metrics.storage as storage
+
 import xml.etree.ElementTree as ET
 
 from datetime import datetime
-
-def iniciar_libre_hardware_monitor():
-    '''
-    Inicia Libre Hardware Monitor con privilegios de administrador.
-    '''
-    # Se obtiene la ruta relativa del ejecutable, y se convierte a ruta absoluta para
-    # mayor claridad en la depuración.
-    ruta = os.path.abspath(os.path.join('librehardwaremonitor', 'LibreHardwareMonitor.exe'))
-
-    try:
-        inspeccion_instancia = esta_libre_hardware_monitor_activo()
-
-        # Se verifica si Libre Hardware Monitor ya está en ejecución. Si ya lo está, no se vuelve a iniciar.
-        if inspeccion_instancia['esta_activo']:
-            print(f'{datetime.now()} >>> *** Libre Hardware Monitor ya está en ejecución ***')
-
-            # Si la instancia ejecutada es externa al proyecto, verificando si hay un valor True en el list,
-            # se notifica al usuario.
-            if True in inspeccion_instancia['hay_instancias_externas']:
-                print('*** Libre Hardware Monitor está en ejecución como una instancia externa al proyecto ***')
-                print('*** Se recomienda cerrar la instancia externa para evitar conflictos ***')
-        else:
-            # Se ejecuta el comando de PowerShell para iniciar Libre Hardware Monitor con privilegios de administrador.
-            subprocess.run(['powershell', 'Start-Process', ruta, '-Verb', 'runAs'], check=True)
-            print(f'{datetime.now()} >>>*** Libre Hardware Monitor iniciado correctamente ***')
-
-            # Se configura Libre Hardware Monitor para que se inicie con los ajustes deseados.
-            configurar_libre_hardware_monitor()
-    except Exception as error:
-        print(f'{datetime.now()} >>> *** Error al iniciar Libre Hardware Monitor ***')
-        print(error)
 
 def esta_libre_hardware_monitor_activo():
     '''
@@ -120,4 +94,69 @@ def configurar_libre_hardware_monitor():
         print(f'{datetime.now()} >>> *** Error al configurar Libre Hardware Monitor ***')
         print(error)
 
-iniciar_libre_hardware_monitor()
+def iniciar_libre_hardware_monitor():
+    '''
+    Inicia Libre Hardware Monitor con privilegios de administrador.
+    '''
+    # Se obtiene la ruta relativa del ejecutable, y se convierte a ruta absoluta para
+    # mayor claridad en la depuración.
+    ruta = os.path.abspath(os.path.join('librehardwaremonitor', 'LibreHardwareMonitor.exe'))
+
+    try:
+        inspeccion_instancia = esta_libre_hardware_monitor_activo()
+
+        # Se verifica si Libre Hardware Monitor ya está en ejecución. Si ya lo está, no se vuelve a iniciar.
+        if inspeccion_instancia['esta_activo']:
+            print(f'{datetime.now()} >>> *** Libre Hardware Monitor ya está en ejecución ***')
+
+            # Si la instancia ejecutada es externa al proyecto, verificando si hay un valor True en el list,
+            # se notifica al usuario.
+            if True in inspeccion_instancia['hay_instancias_externas']:
+                print('*** Libre Hardware Monitor está en ejecución como una instancia externa al proyecto ***')
+                print('*** Se recomienda cerrar la instancia externa para evitar conflictos ***')
+        else:
+            # Se ejecuta el comando de PowerShell para iniciar Libre Hardware Monitor con privilegios de administrador.
+            subprocess.run(['powershell', 'Start-Process', ruta, '-Verb', 'runAs'], check=True)
+            print(f'{datetime.now()} >>>*** Libre Hardware Monitor iniciado correctamente ***')
+
+            # Se configura Libre Hardware Monitor para que se inicie con los ajustes deseados.
+            configurar_libre_hardware_monitor()
+    except Exception as error:
+        print(f'{datetime.now()} >>> *** Error al iniciar Libre Hardware Monitor ***')
+        print(error)
+
+def main():
+    '''
+    Punto de entrada del programa. Se verifica el Operating System que está ejecutando
+    el agente.
+    '''
+    if os.name == 'nt':
+        iniciar_libre_hardware_monitor()
+    if os.name == 'posix':
+        print(f'*** Sistema Operativo: {sys.platform}\n')
+
+        # Metricas de la CPU
+        cpu_metrics = cpu.Cpu()
+        
+        print(f'*** Metricas de la CPU ***\n')
+        print(f'Núcleos físicos: {cpu_metrics.obtener_nucleos_fisicos()}')
+        print(f'Núcleos lógicos: {cpu_metrics.obtener_nucleos_logicos()}\n')
+
+        uso_cpu = cpu_metrics.obtener_uso_cpu()
+
+        print(f'Uso CPU General: {uso_cpu[1]}%\n')
+        
+        for nucleo, uso in enumerate(uso_cpu[0]):
+            print(f'Uso CPU Núcleo {nucleo}: {uso}%')
+
+        temperatura_cpu = cpu_metrics.obtener_temperatura_cpu_linux()
+
+        print(f'\nTemperatura CPU General: {temperatura_cpu[1]}°C\n')
+
+        for nucleo, temperatura in enumerate(temperatura_cpu[0]):
+            print(f'Temperatura CPU Núcleo {nucleo}: {temperatura}°C')
+
+        print(f'\nTemperatura Paquete CPU: {temperatura_cpu[2]}°C')
+
+if __name__ == '__main__':
+    main()
