@@ -52,8 +52,6 @@ def esta_libre_hardware_monitor_activo():
             esta_activo = False
             hay_instancias_externas.append(False)
 
-    print(hay_instancias_externas)
-
     return {
         'esta_activo': esta_activo,
         'hay_instancias_externas': hay_instancias_externas
@@ -125,38 +123,47 @@ def iniciar_libre_hardware_monitor():
         print(f'{datetime.now()} >>> *** Error al iniciar Libre Hardware Monitor ***')
         print(error)
 
+def obtener_metricas_cpu(sistema_operativo):
+    '''
+    Obtiene las métricas de la CPU.
+    '''
+    cpu_metrics = cpu.Cpu()
+
+    print(f'\n*** Metricas de la CPU ***\n')
+    print(f'Núcleos físicos: {cpu_metrics.obtener_nucleos_fisicos()}')
+    print(f'Núcleos lógicos: {cpu_metrics.obtener_nucleos_logicos()}\n')
+
+    uso_cpu = cpu_metrics.obtener_uso_cpu()
+
+    print(f'Uso CPU General: {uso_cpu[1]}%\n')
+
+    for nucleo, uso in enumerate(uso_cpu[0]):
+        print(f'Uso CPU Núcleo {nucleo}: {uso}%')
+
+    if sistema_operativo == 'nt':
+        temperatura_cpu = cpu_metrics.obtener_temperatura_cpu_windows()
+    if sistema_operativo == 'posix':
+        temperatura_cpu = cpu_metrics.obtener_temperatura_cpu_linux()
+
+    print(f'\nTemperatura CPU General: {temperatura_cpu[1]}°C\n')
+
+    for nucleo, temperatura in enumerate(temperatura_cpu[0]):
+        print(f'Temperatura CPU Núcleo {nucleo}: {temperatura}°C')
+
+    print(f'\nTemperatura Paquete CPU: {temperatura_cpu[2]}°C')
+
 def main():
     '''
     Punto de entrada del programa. Se verifica el Operating System que está ejecutando
-    el agente.
+    el agente, y si es Windows, se inicia Libre Hardware Monitor.
     '''
-    if os.name == 'nt':
+    sistema_operativo = os.name
+    print(f'*** Sistema Operativo: {sys.platform} ***\n')
+
+    if sistema_operativo == 'nt':
         iniciar_libre_hardware_monitor()
-    if os.name == 'posix':
-        print(f'*** Sistema Operativo: {sys.platform}\n')
 
-        # Metricas de la CPU
-        cpu_metrics = cpu.Cpu()
-        
-        print(f'*** Metricas de la CPU ***\n')
-        print(f'Núcleos físicos: {cpu_metrics.obtener_nucleos_fisicos()}')
-        print(f'Núcleos lógicos: {cpu_metrics.obtener_nucleos_logicos()}\n')
-
-        uso_cpu = cpu_metrics.obtener_uso_cpu()
-
-        print(f'Uso CPU General: {uso_cpu[1]}%\n')
-        
-        for nucleo, uso in enumerate(uso_cpu[0]):
-            print(f'Uso CPU Núcleo {nucleo}: {uso}%')
-
-        temperatura_cpu = cpu_metrics.obtener_temperatura_cpu_linux()
-
-        print(f'\nTemperatura CPU General: {temperatura_cpu[1]}°C\n')
-
-        for nucleo, temperatura in enumerate(temperatura_cpu[0]):
-            print(f'Temperatura CPU Núcleo {nucleo}: {temperatura}°C')
-
-        print(f'\nTemperatura Paquete CPU: {temperatura_cpu[2]}°C')
+    obtener_metricas_cpu(sistema_operativo)
 
 if __name__ == '__main__':
     main()
