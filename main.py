@@ -188,8 +188,6 @@ def obtener_metricas_cpu(sistema_operativo):
     cpu_metrics = cpu.Cpu()
 
     print(f'\n{datetime.now()} >>> *** Métricas de la CPU ***\n')
-    print(f'Núcleos físicos: {cpu_metrics.obtener_nucleos_fisicos()}')
-    print(f'Núcleos lógicos: {cpu_metrics.obtener_nucleos_logicos()}\n')
 
     uso_cpu = cpu_metrics.obtener_uso_cpu()
 
@@ -197,6 +195,9 @@ def obtener_metricas_cpu(sistema_operativo):
 
     for nucleo, uso in enumerate(uso_cpu[0]):
         print(f'Uso CPU Núcleo {nucleo}: {uso}%')
+
+    print(f'\nNúcleos físicos: {cpu_metrics.obtener_nucleos_fisicos()}')
+    print(f'Núcleos lógicos: {cpu_metrics.obtener_nucleos_logicos()}')
 
     if sistema_operativo == 'nt':
         temperatura_cpu = cpu_metrics.obtener_temperatura_cpu_windows()
