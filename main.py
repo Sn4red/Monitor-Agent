@@ -217,7 +217,7 @@ def main():
     ejecutando el agente, y si es Windows, se inicia Libre Hardware Monitor.
     '''
     sistema_operativo = os.name
-    print(f'{datetime.now()} >>> *** Sistema Operativo: {sys.platform} ***\n')
+    print(f'{datetime.now()} >>> *** Sistema Operativo: {sys.platform} ***')
 
     if sistema_operativo == 'nt':
         iniciar_libre_hardware_monitor()
