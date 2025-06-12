@@ -1,2 +1,5 @@
+# * Ignore externals directory.
 externals/
+
+# * Ignore Python bytecode files.
 **/__pycache__/

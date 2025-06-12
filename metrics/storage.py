@@ -5,8 +5,11 @@ class Storage:
 
     def obtener_particiones(self):
         '''
-        Devuelve las particiones del storage, donde el primer elemento es un tuple conteniendo
-        el dispositivo de cada particion, el segundo elemento
+        Devuelve las particiones del storage, donde el primer elemento es un
+        tuple conteniendo el dispositivo de cada particion, el segundo elemento
+        es un tuple con el punto de montaje de cada partición y el tercer
+        elemento es un tuple con el tipo de sistema de archivos de cada
+        partición.
         '''
         particiones = psutil.disk_partitions()
 
@@ -29,20 +32,25 @@ class Storage:
     
     def obtener_uso_particion(self, particion):
         '''
-        Devuelve el uso de cada partición del storage en un tuple, donde el primer elemento es el total,
-        el segundo elemento es el espacio usado, el tercero elemento es el espacio libre y el cuarto
-        elemento es el porcentaje de uso.
+        Devuelve el uso de cada partición del storage en un tuple, donde el
+        primer elemento es el total, el segundo elemento es el espacio usado,
+        el tercero elemento es el espacio libre y el cuarto elemento es el
+        porcentaje de uso.
         '''
         uso_storage = psutil.disk_usage(particion)
-        uso_storage = (uso_storage.total, uso_storage.used, uso_storage.free, uso_storage.percent)
+        uso_storage = (
+            uso_storage.total, uso_storage.used, uso_storage.free,
+            uso_storage.percent
+        )
 
         return uso_storage
     
     def obtener_uso_storage_io(self):
         '''
-        Devuelve el uso de I/O por disco en un tuple, donde el primer elemento es un tuple conteniendo
-        el número de bytes leídos por cada disco y el segundo elemento es un tuple conteniendo el número
-        de bytes escritos por cada disco.
+        Devuelve el uso de I/O por disco en un tuple, donde el primer elemento
+        es un tuple conteniendo el número de bytes leídos por cada disco y el
+        segundo elemento es un tuple conteniendo el número de bytes escritos
+        por cada disco.
         '''
         uso_storage_io = psutil.disk_io_counters(perdisk=True)
 
