@@ -2,6 +2,10 @@ import subprocess
 import os
 import psutil
 import sys
+import time
+
+# * Configuración.
+import config
 
 # * Métricas
 import metrics.cpu as cpu
@@ -83,7 +87,6 @@ def configurar_libre_hardware_monitor():
     - Iniciar en segundo plano.
     - Configurar el puerto del Web Server a 8085.
     '''
-
     # * Se obtiene el directorio de trabajo actual como una ruta absoluta para
     # * buscar el archivo de configuración.
     ruta_configuracion = os.path.join(
@@ -181,7 +184,31 @@ def iniciar_libre_hardware_monitor():
         # * agente.
         sys.exit(1)
 
-def obtener_metricas_cpu(sistema_operativo):
+def obtener_alertas_cpu(uso_cpu, temperatura_cpu, temperatura_paquete_cpu,
+                        umbrales_uso, umbrales_temperatura,
+                        umbrales_temperatura_paquete):
+    '''
+    Muestra las alertas de la CPU según los umbrales definidos en la
+    configuración.
+    '''
+
+    # * Alerta para el uso de CPU alto.
+    if uso_cpu >= umbrales_uso:
+        print(f'\nAlerta: uso de CPU alto - {uso_cpu[1]}%')
+
+    # * Alerta para la temperatura de CPU alta.
+    if temperatura_cpu >= umbrales_temperatura:
+        print(f'\nAlerta: temperatura de CPU alta - {temperatura_cpu[1]}°C')
+
+    # * Alerta para la temperatura de paquete de CPU alta.
+    if temperatura_paquete_cpu >= umbrales_temperatura_paquete:
+        print(
+            '\nAlerta: temperatura de paquete de CPU alta - '
+            f'{temperatura_cpu[2]}°C'
+        )
+
+def obtener_metricas_cpu(sistema_operativo, umbrales_uso, umbrales_temperatura,
+                         umbrales_temperatura_paquete):
     '''
     Obtiene las métricas de la CPU.
     '''
@@ -211,9 +238,14 @@ def obtener_metricas_cpu(sistema_operativo):
 
     print(f'\nTemperatura Paquete CPU: {temperatura_cpu[2]}°C')
 
+    obtener_alertas_cpu(
+        uso_cpu[1], temperatura_cpu[1], temperatura_cpu[2], umbrales_uso,
+        umbrales_temperatura, umbrales_temperatura_paquete
+    )
+
 def main():
     '''
-    Punto de entrada del programa. Se verifica el Operating System que está
+    Punto de entrada del programa. Se verifica el operating system que está
     ejecutando el agente, y si es Windows, se inicia Libre Hardware Monitor.
     '''
     sistema_operativo = os.name
@@ -222,7 +254,38 @@ def main():
     if sistema_operativo == 'nt':
         iniciar_libre_hardware_monitor()
 
-    obtener_metricas_cpu(sistema_operativo)
+    # * El agente se ejecuta indefinidamente.
+    while True:
+        # * Se cargan los parámetros de configuración, comenzando por el
+        # * intervalo de tiempo entre cada iteración. En el caso de la métrica
+        # * del uso de la CPU, este demora 5 segundos, por lo que el mínimo
+        # * valor del intervalo debe ser 5 segundos.
+        configuracion = config.Config().parametros
+        intervalo = configuracion.get('intervalo')
+
+        configuracion_metricas_cpu = configuracion.get('metricas').get('cpu')
+
+        umbrales_cpu_uso = (
+            configuracion.get('umbrales').get('cpu').get('uso')
+        )
+        umbrales_cpu_temperatura = (
+            configuracion.get('umbrales').get('cpu').get('temperatura')
+        )
+        umbrales_cpu_temperatura_paquete = (
+            configuracion.get('umbrales').get('cpu').get('temperatura_paquete')
+        )
+
+        if configuracion_metricas_cpu:
+            # * Se descuentan 5 segundos al intervalo para compensar el tiempo
+            # * que demora la métrica del uso de la CPU.
+            intervalo -= 5
+
+            obtener_metricas_cpu(
+                sistema_operativo, umbrales_cpu_uso, umbrales_cpu_temperatura,
+                umbrales_cpu_temperatura_paquete
+            )
+
+        time.sleep(intervalo)
 
 if __name__ == '__main__':
     main()

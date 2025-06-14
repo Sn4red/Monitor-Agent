@@ -1,0 +1,13 @@
+{
+    "intervalo": 5,
+    "metricas": {
+        "cpu": true
+    },
+    "umbrales": {
+        "cpu": {
+            "uso": 90,
+            "temperatura": 85,
+            "temperatura_paquete": 90
+        }
+    }
+}
