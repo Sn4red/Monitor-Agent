@@ -1,8 +1,8 @@
-# * Ignore externals directory.
+# * Ignorar el directorio externals.
 externals/
 
-# * Ignore Python bytecode files.
+# * Ignorar los archivos bytecode de Python.
 **/__pycache__/
 
-# * Ignore virtual environment directory.
+# * Ignorara el directorio del entorno virtual.
 .venv/
