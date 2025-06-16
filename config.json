@@ -1,7 +1,8 @@
 {
     "intervalo": 5,
     "metricas": {
-        "cpu": true
+        "cpu": true,
+        "storage": true
     },
     "umbrales": {
         "cpu": {

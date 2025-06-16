@@ -1,34 +1,109 @@
 import psutil
+import wmi
 
 class Storage:
     '''Clase para obtener las métricas del storage.'''
 
-    def obtener_particiones(self):
+    def obtener_almacenamiento_windows(self):
         '''
-        Devuelve las particiones del storage, donde el primer elemento es un
-        tuple conteniendo el dispositivo de cada particion, el segundo elemento
-        es un tuple con el punto de montaje de cada partición y el tercer
-        elemento es un tuple con el tipo de sistema de archivos de cada
-        partición.
+        Devuelve la información del almacenamiento en Windows en un tuple,
+        donde el primer elemento es un tuple conteniendo los modelos de los
+        discos, el segundo elemento es un tuple conteniendo las particiones y
+        el tercer elemento es un tuple conteniendo los sistemas de archivos.
         '''
-        particiones = psutil.disk_partitions()
+        instancia_wmi = wmi.WMI()
 
-        dispositivo = []
-        punto_montaje = []
-        tipo_sistema_archivos = []
+        modelos = []
+        particiones = []
+        sistemas_archivos = []
 
-        for particion in particiones:
-            dispositivo.append(particion.device)
-            punto_montaje.append(particion.mountpoint)
-            tipo_sistema_archivos.append(particion.fstype)
+        for disco in instancia_wmi.Win32_DiskDrive():
+            for particion in disco.associators(
+                'Win32_DiskDriveToDiskPartition'
+            ):
+                for disco_logico in particion.associators(
+                    'Win32_LogicalDiskToPartition'
+                ):
+                    modelos.append(disco.Model)
+                    particiones.append(disco_logico.DeviceID)
+                    sistemas_archivos.append(disco_logico.FileSystem)
 
-        dispositivo = tuple(dispositivo)
-        punto_montaje = tuple(punto_montaje)
-        tipo_sistema_archivos = tuple(tipo_sistema_archivos)
+        modelos = tuple(modelos)
+        particiones = tuple(particiones)
+        sistemas_archivos = tuple(sistemas_archivos)
 
-        particiones = (dispositivo, punto_montaje, tipo_sistema_archivos)
+        almacenamiento = (modelos, particiones, sistemas_archivos)
 
-        return particiones
+        return almacenamiento
+
+    def obtener_horas_encendido(self, ejecucion_smartctl):
+        '''
+        Devuelve las horas de encendido del disco en base a la salida del
+        comando smartctl.
+        '''
+        for linea in ejecucion_smartctl.splitlines():
+            if 'Power On Hours' in linea:
+                cadenas = linea.split()
+
+                for cadena in cadenas:
+                    horas_encendido = cadena.replace(',', '')
+
+                    if horas_encendido.isdigit():
+                        return int(horas_encendido)
+
+        return -1
+
+    def obtener_datos_leidos_escritos(self, ejecucion_smartctl):
+        '''
+        Devuelve el total de datos leídos y escritos del disco en base a la
+        salida del comando smartctl en un tuple, donde el primer elemento es
+        el total de datos leídos y el segundo elemento es el total de datos
+        escritos.
+        '''
+        datos_leidos = None
+        datos_escritos = None
+
+        for linea in ejecucion_smartctl.splitlines():
+            if 'Data Units Read' in linea:
+                cadenas = linea.split()
+
+                for cadena in cadenas:
+                    valor = cadena.replace(',', '')
+
+                    if valor.isdigit():
+                        datos_leidos = int(valor)
+                        break
+
+            elif 'Data Units Written' in linea:
+                cadenas = linea.split()
+
+                for cadena in cadenas:
+                    valor = cadena.replace(',', '')
+
+                    if valor.isdigit():
+                        datos_escritos = int(valor)
+                        break
+
+            # * Si ya se encontraron ambos valores, se sale del bucle.
+            if datos_leidos is not None and datos_escritos is not None:
+                break
+
+        return (datos_leidos, datos_escritos)
+
+    def obtener_temperatura(self, ejecucion_smartctl):
+        '''
+        Devuelve la temperatura del disco en base a la salida del comando
+        smartctl.
+        '''
+        for linea in ejecucion_smartctl.splitlines():
+            if 'Temperature' in linea:
+                cadenas = linea.split()
+
+                for cadena in cadenas:
+                    if cadena.isdigit():
+                        return int(cadena)
+
+        return -1
     
     def obtener_uso_particion(self, particion):
         '''
@@ -44,26 +119,3 @@ class Storage:
         )
 
         return uso_storage
-    
-    def obtener_uso_storage_io(self):
-        '''
-        Devuelve el uso de I/O por disco en un tuple, donde el primer elemento
-        es un tuple conteniendo el número de bytes leídos por cada disco y el
-        segundo elemento es un tuple conteniendo el número de bytes escritos
-        por cada disco.
-        '''
-        uso_storage_io = psutil.disk_io_counters(perdisk=True)
-
-        lectura = []
-        escritura = []
-
-        for _, uso in uso_storage_io.items():
-            lectura.append(uso.read_bytes)
-            escritura.append(uso.write_bytes)
-        
-        lectura = tuple(lectura)
-        escritura = tuple(escritura)
-
-        io = (lectura, escritura)
-
-        return io
