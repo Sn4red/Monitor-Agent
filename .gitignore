@@ -4,5 +4,5 @@ externals/
 # * Ignorar los archivos bytecode de Python.
 **/__pycache__/
 
-# * Ignorara el directorio del entorno virtual.
+# * Ignorar el directorio del entorno virtual.
 .venv/
