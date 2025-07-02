@@ -16,7 +16,7 @@ class Smartmontools:
         try:
             sistema_operativo = os.name
 
-            if sistema_operativo != 'nt':
+            if sistema_operativo == 'nt':
                 # * Para Windows, se obtiene la ruta relativa del ejecutable, y
                 # * se convierte a ruta absoluta para mayor claridad en la
                 # * depuración.
@@ -28,7 +28,7 @@ class Smartmontools:
 
                 comando = [ruta, '-A', almacenamiento, '--device=auto']
 
-            if sistema_operativo == 'nt':
+            if sistema_operativo == 'posix':
                 # * Para Linux, se asume que smartctl está
                 # * instalado y se ejecuta directamente.
                 comando = ['smartctl', '-A', almacenamiento, '--device=auto']

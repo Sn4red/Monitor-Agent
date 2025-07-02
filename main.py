@@ -101,13 +101,18 @@ def obtener_metricas_storage(sistema_operativo):
 
     instancia_smartmontools = smartmontools.Smartmontools()
 
-    for modelo, particion, sistema_archivos in zip(*almacenamiento):
-        print(f'Modelo: {modelo}')
-        print(f'Partición: {particion}')
-        print(f'Sistema de Archivos: {sistema_archivos}')
+    for disco in almacenamiento:
+        print(f'Modelo: {disco['modelo']}')
+
+        # * La primera partición en el tuple de particiones va a servir como
+        # * partición representante del disco, y de esta manera de obtendrán
+        # * las métricas del disco.
+        particion_representante = disco['particiones'][0]['particion']
 
         resultado_smartctl = (
-            instancia_smartmontools.ejecutar_smartmontools(particion)
+            instancia_smartmontools.ejecutar_smartmontools(
+                particion_representante
+            )
         )
 
         # * Se obtienen las horas de encendido del disco en Windows.
@@ -131,15 +136,21 @@ def obtener_metricas_storage(sistema_operativo):
             storage_metrics.obtener_temperatura(resultado_smartctl)
         )
 
-        print(f'Temperatura: {temperatura_disco}°C')
+        print(f'Temperatura: {temperatura_disco}°C\n')
 
-        # * Se obtiene el uso por disco en Windows.
-        uso_particion = storage_metrics.obtener_uso_particion(particion)
+        for particion in disco['particiones']:
+            print(f'Partición: {particion['particion']}')
+            print(f'Sistema de Archivos: {particion['sistema_archivos']}')
+            
+            # * Se obtiene el uso por partición en Windows.
+            uso_particion = (
+                storage_metrics.obtener_uso_particion(particion['particion'])
+            )
 
-        print(f'Espacio total (bytes): {uso_particion[0]}')
-        print(f'Espacio usado (bytes): {uso_particion[1]}')
-        print(f'Espacio libre (bytes): {uso_particion[2]}')
-        print(f'Porcentaje usado: {uso_particion[3]}%\n')
+            print(f'Espacio total (bytes): {uso_particion[0]}')
+            print(f'Espacio usado (bytes): {uso_particion[1]}')
+            print(f'Espacio libre (bytes): {uso_particion[2]}')
+            print(f'Porcentaje usado: {uso_particion[3]}%\n')
 
 def main():
     '''

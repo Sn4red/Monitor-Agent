@@ -7,32 +7,37 @@ class Storage:
     def obtener_almacenamiento_windows(self):
         '''
         Devuelve la información del almacenamiento en Windows en un tuple,
-        donde el primer elemento es un tuple conteniendo los modelos de los
-        discos, el segundo elemento es un tuple conteniendo las particiones y
-        el tercer elemento es un tuple conteniendo los sistemas de archivos.
+        donde cada elemento es un dictionary que contiene el modelo del disco
+        y un tuple de particiones. Cada partición es un dictionary,
+        conteniendo la unidad de la partición y el sistema de archivos.
         '''
         instancia_wmi = wmi.WMI()
 
-        modelos = []
-        particiones = []
-        sistemas_archivos = []
+        almacenamiento = []
 
         for disco in instancia_wmi.Win32_DiskDrive():
+            modelo = disco.Model
+            particiones = []
+
             for particion in disco.associators(
                 'Win32_DiskDriveToDiskPartition'
             ):
                 for disco_logico in particion.associators(
                     'Win32_LogicalDiskToPartition'
                 ):
-                    modelos.append(disco.Model)
-                    particiones.append(disco_logico.DeviceID)
-                    sistemas_archivos.append(disco_logico.FileSystem)
+                    particiones.append({
+                        'particion': disco_logico.DeviceID,
+                        'sistema_archivos': disco_logico.FileSystem,
+                    })
 
-        modelos = tuple(modelos)
-        particiones = tuple(particiones)
-        sistemas_archivos = tuple(sistemas_archivos)
+            particiones = tuple(particiones)
 
-        almacenamiento = (modelos, particiones, sistemas_archivos)
+            almacenamiento.append({
+                'modelo': modelo,
+                'particiones': particiones
+            })
+
+        almacenamiento = tuple(almacenamiento)
 
         return almacenamiento
 
