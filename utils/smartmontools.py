@@ -36,7 +36,10 @@ class Smartmontools:
                 # * completa a 'smartctl' porque es la que se configuró en
                 # * '/etc/sudoers' con 'NOPASSWD' para que el comando no
                 # * requiera contraseña.
-                comando = ['sudo', '/usr/sbin/smartctl', '-A', almacenamiento, '--device=auto']
+                comando = [
+                    'sudo', '/usr/sbin/smartctl', '-A', almacenamiento,
+                    '--device=auto'
+                ]
 
             resultado = subprocess.run(
                 comando, capture_output=True, text=True, check=True
