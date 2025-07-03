@@ -29,9 +29,14 @@ class Smartmontools:
                 comando = [ruta, '-A', almacenamiento, '--device=auto']
 
             if sistema_operativo == 'posix':
-                # * Para Linux, se asume que smartctl está
-                # * instalado y se ejecuta directamente.
-                comando = ['smartctl', '-A', almacenamiento, '--device=auto']
+                # * Para Linux, se asume que smartctl está instalado y se
+                # * ejecuta directamente.
+                # * Se utiliza 'sudo' porque necesita permisos de administrador
+                # * para acceder a la información del disco, y se usa la ruta
+                # * completa a 'smartctl' porque es la que se configuró en
+                # * '/etc/sudoers' con 'NOPASSWD' para que el comando no
+                # * requiera contraseña.
+                comando = ['sudo', '/usr/sbin/smartctl', '-A', almacenamiento, '--device=auto']
 
             resultado = subprocess.run(
                 comando, capture_output=True, text=True, check=True

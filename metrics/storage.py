@@ -1,5 +1,14 @@
 import psutil
-import wmi
+import os
+import subprocess
+import json
+import sys
+
+from datetime import datetime
+
+# * WMI sólo es importado si el sistema operativo es Windows.
+if os.name == 'nt':
+    import wmi
 
 class Storage:
     '''Clase para obtener las métricas del storage.'''
@@ -40,6 +49,67 @@ class Storage:
         almacenamiento = tuple(almacenamiento)
 
         return almacenamiento
+
+    def obtener_almacenamiento_linux(self):
+        '''
+        Devuelve la información del almacenamiento en Linux en un tuple,
+        donde cada elemento es un dictionary que contiene el nombre del
+        dispositivo, el modelo y un tuple de particiones. Cada partición es un
+        dictionary, conteniendo la unidad de la partición y el sistema de
+        archivos.
+        '''
+        almacenamiento = []
+
+        try:
+            comando = [
+                'lsblk', '-J', '-o', 'NAME,MODEL,MOUNTPOINTS,TYPE,FSTYPE'
+            ]
+
+            resultado = subprocess.run(
+                comando, capture_output=True, text=True, check=True
+            )
+
+            resultadoJSON = json.loads(resultado.stdout)['blockdevices']
+
+            almacenamiento = []
+
+            for disco in resultadoJSON:
+                if disco.get('type') == 'disk':
+                    nombre = disco.get('name')
+                    modelo = disco.get('model')
+
+                    if nombre.startswith('nvme'):
+                        nombre = '/dev/' + nombre.rsplit('n', 1)[0]
+                    elif nombre.startswith('sd'):
+                        nombre = '/dev/' + nombre
+                    elif nombre.startswith('mmcblk'):
+                        nombre = '/dev/' + nombre
+
+                    particiones = []
+
+                    for particion in disco.get('children'):
+                        particiones.append({
+                            'particion': particion.get('mountpoints')[0],
+                            'sistema_archivos': particion.get('fstype')
+                        })
+
+                    particiones = tuple(particiones)
+
+                    almacenamiento.append({
+                        'nombre': nombre,
+                        'modelo': modelo,
+                        'particiones': particiones
+                    })
+
+            almacenamiento = tuple(almacenamiento)
+
+            return almacenamiento
+        except Exception as error:
+            print(f'{datetime.now()} >>> *** Error al ejecutar lsblk ***')
+            print(error)
+
+            # * Si no se puede ejecutar lsblk, se finaliza el agente.
+            sys.exit(1)
 
     def obtener_horas_encendido(self, ejecucion_smartctl):
         '''
@@ -124,3 +194,6 @@ class Storage:
         )
 
         return uso_storage
+    
+obj = Storage()
+print(obj.obtener_almacenamiento_linux())

@@ -97,23 +97,33 @@ def obtener_metricas_storage(sistema_operativo):
         # * Se obtiene la información del almacenamiento en Windows.
         almacenamiento = storage_metrics.obtener_almacenamiento_windows()
     if sistema_operativo == 'posix':
-        pass
+        almacenamiento = storage_metrics.obtener_almacenamiento_linux()
 
     instancia_smartmontools = smartmontools.Smartmontools()
 
     for disco in almacenamiento:
         print(f'Modelo: {disco['modelo']}')
 
-        # * La primera partición en el tuple de particiones va a servir como
-        # * partición representante del disco, y de esta manera de obtendrán
-        # * las métricas del disco.
-        particion_representante = disco['particiones'][0]['particion']
+        if sistema_operativo == 'nt':
+            # * La primera partición en el tuple de particiones va a servir
+            # * como partición representante del disco, y de esta manera de
+            # * obtendrán las métricas del disco.
+            particion_representante = disco['particiones'][0]['particion']
 
-        resultado_smartctl = (
-            instancia_smartmontools.ejecutar_smartmontools(
-                particion_representante
+            resultado_smartctl = (
+                instancia_smartmontools.ejecutar_smartmontools(
+                    particion_representante
+                )
             )
-        )
+
+        if sistema_operativo == 'posix':
+            # * En Linux, se obtiene el nombre del disco directamente del
+            # * dictionary del disco, que se usará para obtener las métricas.
+            nombre_disco = disco['nombre']
+
+            resultado_smartctl = (
+                instancia_smartmontools.ejecutar_smartmontools(nombre_disco)
+            )
 
         # * Se obtienen las horas de encendido del disco en Windows.
         horas_encendido = (
