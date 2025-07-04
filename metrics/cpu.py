@@ -1,5 +1,6 @@
 import psutil
 import requests
+import cpuinfo
 
 from datetime import datetime
 
@@ -7,7 +8,15 @@ class Cpu:
     '''Clase para obtener las métricas de la CPU.'''
 
     def __init__(self):
-       pass
+        self.modelo = None
+
+    def obtener_modelo_cpu(self):
+        '''Devuelve el modelo de la CPU.'''
+        # * Obtener el modelo de la CPU demora considerablemente, por lo que
+        # * se almacena en el attribute 'modelo' y así sólo se usa el attribute
+        # * para el resto de la ejecución del programa.
+        self.modelo = cpuinfo.get_cpu_info()['brand_raw']
+        return self.modelo
 
     def obtener_nucleos_fisicos(self):
         '''Devuelve el número de núcleos físicos de la CPU.'''
@@ -29,7 +38,7 @@ class Cpu:
 
         return uso_cpu
 
-    def obtener_temperatura_cpu_windows(self):
+    def obtener_temperatura_cpu_windows(self, modelo):
         '''
         Devuelve la temperatura de la CPU en Windows en un tuple, donde el
         primer elemento es un tuple conteniendo la temperatura de cada núcleo,
@@ -58,40 +67,83 @@ class Cpu:
                             core = 1
 
                             for sensor_temperatura in sensor['Children']:
-                                # * Se accede al objeto que contiene la
-                                # * temperatura de cada núcleo.
-                                if (sensor_temperatura['Text'] ==
-                                    f'CPU Core #{core}'):
-                                    # * El valor tiene formato string con el
-                                    # * símbolo de grados Celsius. Se curó a
-                                    # * float.
-                                    temperatura_nucleo = float(
-                                        sensor_temperatura['Value']
-                                            .replace('°C', '')
-                                            .strip()
-                                    )
-                                    temperatura_nucleos.append(
-                                        temperatura_nucleo
-                                    )
+                                # * Si la CPU es Intel, se devuelve la
+                                # * temperatura de cada núcleo, su promedio y
+                                # * la temperatura del paquete.
+                                if modelo.startswith('Intel'):
+                                    # * Se accede al objeto que contiene la
+                                    # * temperatura de cada núcleo.
+                                    if (sensor_temperatura['Text'] ==
+                                        f'CPU Core #{core}'):
+                                        # * El valor tiene formato string con
+                                        # * el símbolo de grados Celsius. Se
+                                        # * curó a float.
+                                        temperatura_nucleo = float(
+                                            sensor_temperatura['Value']
+                                                .replace('°C', '')
+                                                .strip()
+                                        )
+                                        temperatura_nucleos.append(
+                                            temperatura_nucleo
+                                        )
 
-                                    # * A la primera ejecución de este if, se
-                                    # * va a incrementar el valor para que
-                                    # * acceda a todos los núcleos, ya que
-                                    # * están presentados en orden en el JSON.
-                                    core += 1
+                                        # * A la primera ejecución de este if,
+                                        # * se va a incrementar el valor para
+                                        # * que acceda a todos los núcleos, ya
+                                        # * que están presentados en orden en
+                                        # * el JSON.
+                                        core += 1
 
-                                # * Se accede al objeto que contiene la
-                                # * temperatura del paquete de la CPU.
-                                if sensor_temperatura['Text'] == 'CPU Package':
-                                    # * El valor tiene formato string con el
-                                    # * símbolo de grados Celsius. Se curó a
-                                    # * float.
-                                    paquete_cpu = float(
-                                        sensor_temperatura['Value']
-                                            .replace('°C', '')
-                                            .strip()
-                                    )
+                                    # * Se accede al objeto que contiene la
+                                    # * temperatura del paquete de la CPU.
+                                    if (sensor_temperatura['Text'] ==
+                                        'CPU Package'):
+                                        # * El valor tiene formato string con
+                                        # * el símbolo de grados Celsius. Se
+                                        # * curó a float.
+                                        paquete_cpu = float(
+                                            sensor_temperatura['Value']
+                                                .replace('°C', '')
+                                                .strip()
+                                        )
 
+                                # * Si la CPU es AMD, se devuelve la
+                                # * temperatura de los núcleos y la
+                                # * temperatura del paquete.
+                                if modelo.startswith('AMD'):
+                                    # * Se accede al objeto que contiene la
+                                    # * temperatura de los núcleos.
+                                    if (sensor_temperatura['Text'] ==
+                                        'CCD1 (Tdie)'):
+                                        # * El valor tiene formato string con
+                                        # * el símbolo de grados Celsius. Se
+                                        # * curó a float.
+                                        valor_temperatura_nucleos = float(
+                                            sensor_temperatura['Value']
+                                                .replace('°C', '')
+                                                .strip()
+                                        )
+
+                                        temperatura_nucleos.append(
+                                            valor_temperatura_nucleos
+                                        )
+
+                                    # * Se accede al objeto que contiene la
+                                    # * temperatura del paquete de la CPU.
+                                    if (sensor_temperatura['Text'] ==
+                                        'Core (Tctl/Tdie)'):
+                                        # * El valor tiene formato string con
+                                        # * el símbolo de grados Celsius. Se
+                                        # * curó a float.
+                                        paquete_cpu = float(
+                                            sensor_temperatura['Value']
+                                                .replace('°C', '')
+                                                .strip()
+                                        )
+                                        
+            # * En el caso de que el procesador sea AMD, el tuple sólo va a
+            # * contener un elemento, que es la temperatura de los núcleos (no
+            # * es un promedio).
             temperatura_nucleos = tuple(temperatura_nucleos)
             temperatura_promedio = round(
                 sum(temperatura_nucleos) / len(temperatura_nucleos), 2

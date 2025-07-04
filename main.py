@@ -43,13 +43,11 @@ def obtener_alertas_cpu(uso_cpu, temperatura_cpu, temperatura_paquete_cpu,
             f'{temperatura_cpu[2]}°C'
         )
 
-def obtener_metricas_cpu(sistema_operativo, umbrales_uso, umbrales_temperatura,
-                         umbrales_temperatura_paquete):
+def obtener_metricas_cpu(cpu_metrics, sistema_operativo, umbrales_uso,
+                         umbrales_temperatura, umbrales_temperatura_paquete):
     '''
     Obtiene las métricas de la CPU.
     '''
-    cpu_metrics = cpu.Cpu()
-
     print(f'\n{datetime.now()} >>> *** Métricas de la CPU ***\n')
 
     # * Se obtiene el uso general de la CPU.
@@ -61,24 +59,51 @@ def obtener_metricas_cpu(sistema_operativo, umbrales_uso, umbrales_temperatura,
     for nucleo, uso in enumerate(uso_cpu[0]):
         print(f'Uso CPU Núcleo {nucleo}: {uso}%')
 
+    # * Se obtiene el modelo de la CPU.
+    if cpu_metrics.modelo is None:
+        cpu_metrics.obtener_modelo_cpu()
+
+    print(f'\nModelo CPU: {cpu_metrics.modelo}')
+
     # * Se obtienen los núcleos físicos y lógicos de la CPU.
     print(f'\nNúcleos físicos: {cpu_metrics.obtener_nucleos_fisicos()}')
     print(f'Núcleos lógicos: {cpu_metrics.obtener_nucleos_logicos()}')
 
-    # * Se obtiene la temperatura de la CPU.
     if sistema_operativo == 'nt':
-        temperatura_cpu = cpu_metrics.obtener_temperatura_cpu_windows()
+        temperatura_cpu = cpu_metrics.obtener_temperatura_cpu_windows(
+            cpu_metrics.modelo
+        )
+
+        if cpu_metrics.modelo.startswith('Intel'):
+            # * Se obtiene la temperatura de la CPU.
+            print(f'\nTemperatura CPU General: {temperatura_cpu[1]}°C\n')
+
+            # * Se obtiene la temperatura de cada núcleo de la CPU.
+            for nucleo, temperatura in enumerate(temperatura_cpu[0]):
+                print(f'Temperatura CPU Núcleo {nucleo}: {temperatura}°C')
+
+            # * Se obtiene la temperatura del paquete de la CPU.
+            print(f'\nTemperatura Paquete CPU: {temperatura_cpu[2]}°C')
+
+        if cpu_metrics.modelo.startswith('AMD'):
+            # * Se obtiene la temperatura de la CPU.
+            print(f'\nTemperatura CPU General: {temperatura_cpu[1]}°C')
+
+            # * Se obtiene la temperatura del paquete de la CPU.
+            print(f'Temperatura Paquete CPU: {temperatura_cpu[2]}°C')
+
     if sistema_operativo == 'posix':
         temperatura_cpu = cpu_metrics.obtener_temperatura_cpu_linux()
 
-    print(f'\nTemperatura CPU General: {temperatura_cpu[1]}°C\n')
+        # * Se obtiene la temperatura de la CPU.
+        print(f'\nTemperatura CPU General: {temperatura_cpu[1]}°C\n')
 
-    # * Se obtiene la temperatura de cada núcleo de la CPU.
-    for nucleo, temperatura in enumerate(temperatura_cpu[0]):
-        print(f'Temperatura CPU Núcleo {nucleo}: {temperatura}°C')
+        # * Se obtiene la temperatura de cada núcleo de la CPU.
+        for nucleo, temperatura in enumerate(temperatura_cpu[0]):
+            print(f'Temperatura CPU Núcleo {nucleo}: {temperatura}°C')
 
-    # * Se obtiene la temperatura del paquete de la CPU.
-    print(f'\nTemperatura Paquete CPU: {temperatura_cpu[2]}°C')
+        # * Se obtiene la temperatura del paquete de la CPU.
+        print(f'\nTemperatura Paquete CPU: {temperatura_cpu[2]}°C')
 
     obtener_alertas_cpu(
         uso_cpu[1], temperatura_cpu[1], temperatura_cpu[2], umbrales_uso,
@@ -97,6 +122,7 @@ def obtener_metricas_storage(sistema_operativo):
         # * Se obtiene la información del almacenamiento en Windows.
         almacenamiento = storage_metrics.obtener_almacenamiento_windows()
     if sistema_operativo == 'posix':
+        # * Se obtiene la información del almacenamiento en Linux.
         almacenamiento = storage_metrics.obtener_almacenamiento_linux()
 
     instancia_smartmontools = smartmontools.Smartmontools()
@@ -175,6 +201,8 @@ def main():
         instancia_lhm = lhm.LibreHardwareMonitor()
         instancia_lhm.iniciar_libre_hardware_monitor()
 
+    cpu_metrics = cpu.Cpu()
+
     # * El agente se ejecuta indefinidamente.
     while True:
         # * Se cargan los parámetros de configuración, comenzando por el
@@ -207,8 +235,8 @@ def main():
             intervalo -= 5
 
             obtener_metricas_cpu(
-                sistema_operativo, umbrales_cpu_uso, umbrales_cpu_temperatura,
-                umbrales_cpu_temperatura_paquete
+                cpu_metrics, sistema_operativo, umbrales_cpu_uso,
+                umbrales_cpu_temperatura, umbrales_cpu_temperatura_paquete
             )
 
         # * Si está definido en la configuración, se obtienen las métricas del

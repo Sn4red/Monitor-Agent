@@ -194,6 +194,3 @@ class Storage:
         )
 
         return uso_storage
-    
-obj = Storage()
-print(obj.obtener_almacenamiento_linux())
