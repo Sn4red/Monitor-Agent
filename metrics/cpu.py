@@ -162,7 +162,7 @@ class Cpu:
 
             return []
         
-    def obtener_temperatura_cpu_linux(self):
+    def obtener_temperatura_cpu_linux(self, modelo):
         '''
         Devuelve la temperatura de la CPU en Linux en un tuple, donde el primer
         elemento es un tuple conteniendo la temperatura de cada núcleo, el
@@ -196,6 +196,8 @@ class Cpu:
         temperatura_promedio = round(
             sum(temperatura_nucleos) / len(temperatura_nucleos), 2
         )
+        temperatura_nucleos = (0, )
+        temperatura_promedio = 0.0
         temperatura_cpu = (
             temperatura_nucleos, temperatura_promedio, paquete_cpu
         )

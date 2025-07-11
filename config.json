@@ -1,14 +1,17 @@
 {
-    "intervalo": 5,
+    "intervalo": 5000,
     "metricas": {
         "cpu": true,
         "storage": true
     },
     "umbrales": {
         "cpu": {
-            "uso": 90,
-            "temperatura": 85,
-            "temperatura_paquete": 90
+            "uso": 5,
+            "temperatura_paquete": 40
+        },
+        "storage": {
+            "temperatura": 65,
+            "espacio_libre": 1073741824
         }
     }
 }
